@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<title>Valentine ❤️</title>
+
+<style>
+
+body {
+    background: linear-gradient(135deg, #ff9a9e, #fad0c4);
+    font-family: Arial, sans-serif;
+    text-align: center;
+    height: 100vh;
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.container {
+    background: white;
+    padding: 40px;
+    border-radius: 20px;
+    box-shadow: 0 0 20px rgba(0,0,0,0.2);
+    position: relative;
+    width: 380px;
+    height: 320px;
+}
+
+h1 {
+    color: #ff4b5c;
+    margin-bottom: 25px;
+}
+
+.buttons {
+    display: flex;
+    justify-content: center;
+    margin-top: 10px;
+}
+
+button {
+    width: 120px;
+    height: 45px;
+    font-size: 18px;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+}
+
+#yes {
+    background: #ff4b5c;
+    color: white;
+}
+
+#yes:hover {
+    background: #ff2f45;
+}
+
+#no {
+    background: #ccc;
+    position: absolute;
+}
+
+#message {
+    margin-top: 25px;
+    font-size: 22px;
+    color: #ff4b5c;
+    display: none;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <h1>Sofia ❤️<br>Will you be my Valentine?</h1>
+
+    <!-- Solo SI nel flex -->
+    <div class="buttons">
+        <button id="yes">Sì 😍</button>
+    </div>
+
+    <!-- NO separato -->
+    <button id="no">No 😅</button>
+
+    <div id="message">Yaaay! 💖 Ti amo! 💕</div>
+
+</div>
+
+<script>
+
+const noBtn = document.getElementById("no");
+const yesBtn = document.getElementById("yes");
+const msg = document.getElementById("message");
+const box = document.querySelector(".container");
+
+// Posizione iniziale: centrato sotto SI
+setStartPosition();
+
+function setStartPosition() {
+
+    const yesRect = yesBtn.getBoundingClientRect();
+    const boxRect = box.getBoundingClientRect();
+
+    const x = (yesRect.left + yesRect.right) / 2 
+              - boxRect.left 
+              - noBtn.offsetWidth / 2;
+
+    const y = yesRect.bottom - boxRect.top + 15;
+
+    noBtn.style.left = x + "px";
+    noBtn.style.top = y + "px";
+}
+
+// Movimento nel box
+function moveNo() {
+
+    const maxX = box.clientWidth - noBtn.offsetWidth;
+    const maxY = box.clientHeight - noBtn.offsetHeight;
+
+    const x = Math.random() * maxX;
+    const y = Math.random() * maxY;
+
+    noBtn.style.left = x + "px";
+    noBtn.style.top = y + "px";
+}
+
+// Scappa
+noBtn.addEventListener("mouseover", moveNo);
+
+// Click SI
+yesBtn.addEventListener("click", () => {
+
+    msg.style.display = "block";
+    yesBtn.style.display = "none";
+    noBtn.style.display = "none";
+
+});
+
+</script>
+
+</body>
+</html>
