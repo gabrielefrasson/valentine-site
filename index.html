@@ -211,6 +211,9 @@ function moveNo() {
     noBtn.style.right = "auto";
 
     scale *= 1.2;   /* cresce più velocemente */
+    if (window.innerWidth <= 600) {
+    yesBtn.style.transform = `translateX(-50%) scale(${scale})`;
+} else {
     yesBtn.style.transform = `scale(${scale})`;
 }
 
@@ -252,3 +255,4 @@ setInterval(createHeart, 400);
 
 </body>
 </html>
+
