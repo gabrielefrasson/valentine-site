@@ -2,7 +2,7 @@
 <html lang="it">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Valentine 💖</title>
 
 <style>
@@ -14,13 +14,20 @@
     font-family: 'Segoe UI', sans-serif;
 }
 
+html {
+    height: 100%;
+    overflow: hidden;
+}
+
 body {
     height: 100vh;
+    height: 100dvh;
+    width: 100vw;
+    overflow: hidden;
     display: flex;
     flex-direction: column;
     align-items: center;
     text-align: center;
-    overflow: hidden;
     background: linear-gradient(
         to top,
         #fff5f7 0%,
@@ -30,37 +37,33 @@ body {
     );
 }
 
-/* Titolo */
+/* Titolo sopra i cuori */
 h1 {
     margin-top: 26vh;
     font-size: 42px;
     color: white;
     margin-bottom: 40px;
+    position: relative;
+    z-index: 2;
 }
 
-/* Sparkle sempre attivo */
+/* Sparkle */
 .sparkle {
     animation: sparkleGlow 2s infinite alternate ease-in-out;
 }
 
 @keyframes sparkleGlow {
-    0% {
-        text-shadow: 0 0 10px #fff,
-                     0 0 20px #ffccd5;
-    }
-    100% {
-        text-shadow: 0 0 20px #ffffff,
-                     0 0 35px #ff4d6d,
-                     0 0 50px #ff8fab;
-    }
+    0% { text-shadow: 0 0 10px #fff, 0 0 20px #ffccd5; }
+    100% { text-shadow: 0 0 20px #fff, 0 0 35px #ff4d6d, 0 0 50px #ff8fab; }
 }
 
-/* Area movimento */
+/* Area bottoni sopra i cuori */
 .play-area {
     position: relative;
     width: 600px;
     height: 320px;
     max-width: 90vw;
+    z-index: 2;
 }
 
 /* Bottoni */
@@ -81,7 +84,6 @@ button {
     background: linear-gradient(45deg, #ff4d6d, #ff758f);
     color: white;
     box-shadow: 0 10px 25px rgba(255, 77, 109, 0.4);
-    z-index: 1;
 }
 
 #no {
@@ -90,21 +92,20 @@ button {
     background: #ffffffcc;
     color: #333;
     max-width: 200px;
-    white-space: normal;
-    z-index: 2;
 }
 
-/* Cuori background */
+/* Cuori background sotto tutto */
 .heart {
-    position: absolute;
-    font-size: 22px;
+    position: fixed;
     animation: float 8s linear infinite;
-    opacity: 0.5;
+    opacity: 0.6;
+    pointer-events: none;
+    z-index: 0;
 }
 
 @keyframes float {
     0% { transform: translateY(100vh); opacity: 0; }
-    50% { opacity: 0.7; }
+    50% { opacity: 0.9; }
     100% { transform: translateY(-10vh); opacity: 0; }
 }
 
@@ -113,20 +114,12 @@ button {
     position: fixed;
     animation: explode 1.2s ease-out forwards;
     pointer-events: none;
+    z-index: 3;
 }
 
 @keyframes explode {
-    0% {
-        transform: translate(0,0) scale(1);
-        opacity: 1;
-    }
-    70% {
-        opacity: 1;
-    }
-    100% {
-        transform: translate(var(--x), var(--y)) scale(2);
-        opacity: 0;
-    }
+    0% { transform: translate(0,0) scale(1); opacity: 1; }
+    100% { transform: translate(var(--x), var(--y)) scale(2); opacity: 0; }
 }
 
 /* Mobile */
@@ -194,9 +187,17 @@ const noTexts = [
     "Please don't do this to me, I'm fragile"
 ];
 
+const heartVariety = ["💗","💖","💘","💕","💞","💓"];
+
 let textIndex = 0;
 
-/* Movimento NO */
+function getViewportHeight() {
+    return window.visualViewport
+        ? window.visualViewport.height
+        : window.innerHeight;
+}
+
+/* Movimento NO con limitatore forte mobile */
 function moveNo() {
 
     textIndex = (textIndex + 1) % noTexts.length;
@@ -205,14 +206,22 @@ function moveNo() {
     const yesRect = yesBtn.getBoundingClientRect();
     const margin = 40;
 
-    const maxX = window.innerWidth - noBtn.offsetWidth;
-    const maxY = window.innerHeight - noBtn.offsetHeight;
+    const viewportHeight = getViewportHeight();
+    const viewportWidth = window.innerWidth;
+
+    const safeMargin = window.innerWidth <= 600 ? 45 : 12;
+
+    const maxX = viewportWidth - noBtn.offsetWidth - safeMargin;
+    const maxY = viewportHeight - noBtn.offsetHeight - safeMargin;
+
+    const minX = safeMargin;
+    const minY = safeMargin;
 
     let x, y;
 
     do {
-        x = Math.random() * maxX;
-        y = Math.random() * maxY;
+        x = minX + Math.random() * (maxX - minX);
+        y = minY + Math.random() * (maxY - minY);
     } while (
         y + noBtn.offsetHeight > yesRect.top - margin &&
         y < yesRect.bottom + margin
@@ -223,10 +232,13 @@ function moveNo() {
         firstMove = true;
     }
 
+    x = Math.max(minX, Math.min(x, maxX));
+    y = Math.max(minY, Math.min(y, maxY));
+
     noBtn.style.left = x + "px";
     noBtn.style.top = y + "px";
 
-    scale *= 1.15;
+    scale *= 1.25;
 
     if (window.innerWidth <= 600) {
         yesBtn.style.transform = `translateX(-50%) scale(${scale})`;
@@ -240,17 +252,20 @@ noBtn.addEventListener("pointerdown", (e) => {
     moveNo();
 });
 
-/* Esplosione gigante */
+/* Esplosione */
 function explodeHearts() {
+
+    const centerX = window.innerWidth / 2;
+    const centerY = getViewportHeight() / 2;
 
     for (let i = 0; i < 60; i++) {
 
         const heart = document.createElement("div");
         heart.classList.add("explosion-heart");
-        heart.innerHTML = "💖";
+        heart.innerHTML = heartVariety[Math.floor(Math.random()*heartVariety.length)];
 
-        heart.style.left = window.innerWidth / 2 + "px";
-        heart.style.top = window.innerHeight / 2 + "px";
+        heart.style.left = centerX + "px";
+        heart.style.top = centerY + "px";
 
         const angle = Math.random() * 2 * Math.PI;
         const radius = 300 + Math.random() * 200;
@@ -270,17 +285,10 @@ yesBtn.addEventListener("click", () => {
     explodeHearts();
 
     setTimeout(() => {
-
-        document.body.style.display = "block";
-        document.body.style.margin = "0";
-
         document.body.innerHTML = `
             <div style="
                 position:fixed;
-                top:0;
-                left:0;
-                width:100vw;
-                height:100vh;
+                inset:0;
                 display:flex;
                 flex-direction:column;
                 justify-content:center;
@@ -293,36 +301,32 @@ yesBtn.addEventListener("click", () => {
                     I knew it 😏💘
                 </h1>
 
-                <div style="
-                    display:flex;
-                    justify-content:center;
-                    align-items:center;
-                    gap:30px;
-                    flex-wrap:wrap;
-                    margin-top:30px;
-                ">
+                <div style="margin-top:30px; display:flex; gap:30px; flex-wrap:wrap; justify-content:center;">
                     <img src="love.gif" width="250">
                     <img src="kiss.jpeg" width="250">
                 </div>
             </div>
         `;
-
     }, 900);
 });
 
-/* Cuori fluttuanti background */
+/* Cuori fluttuanti con varietà */
 function createHeart() {
+
     const heart = document.createElement("div");
     heart.classList.add("heart");
-    heart.innerHTML = "💗";
+
+    heart.innerHTML = heartVariety[Math.floor(Math.random()*heartVariety.length)];
     heart.style.left = Math.random() * 100 + "vw";
     heart.style.fontSize = (Math.random() * 25 + 15) + "px";
     heart.style.animationDuration = (Math.random() * 4 + 6) + "s";
+
     document.body.appendChild(heart);
+
     setTimeout(() => heart.remove(), 8000);
 }
 
-setInterval(createHeart, 400);
+setInterval(createHeart, 500);
 
 </script>
 
