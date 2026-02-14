@@ -35,9 +35,24 @@ h1 {
     margin-top: 26vh;
     font-size: 42px;
     color: white;
-    text-shadow: 0 4px 15px rgba(0,0,0,0.15);
     margin-bottom: 40px;
-    padding: 0 20px;
+}
+
+/* Sparkle sempre attivo */
+.sparkle {
+    animation: sparkleGlow 2s infinite alternate ease-in-out;
+}
+
+@keyframes sparkleGlow {
+    0% {
+        text-shadow: 0 0 10px #fff,
+                     0 0 20px #ffccd5;
+    }
+    100% {
+        text-shadow: 0 0 20px #ffffff,
+                     0 0 35px #ff4d6d,
+                     0 0 50px #ff8fab;
+    }
 }
 
 /* Area movimento */
@@ -60,13 +75,13 @@ button {
     min-width: 140px;
 }
 
-/* Desktop posizione simmetrica */
 #yes {
     left: 80px;
     top: 120px;
     background: linear-gradient(45deg, #ff4d6d, #ff758f);
     color: white;
     box-shadow: 0 10px 25px rgba(255, 77, 109, 0.4);
+    z-index: 1;
 }
 
 #no {
@@ -76,9 +91,10 @@ button {
     color: #333;
     max-width: 200px;
     white-space: normal;
+    z-index: 2;
 }
 
-/* Cuori */
+/* Cuori background */
 .heart {
     position: absolute;
     font-size: 22px;
@@ -92,34 +108,28 @@ button {
     100% { transform: translateY(-10vh); opacity: 0; }
 }
 
-/* Seconda schermata */
-.success {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 30px;
+/* Esplosione */
+.explosion-heart {
+    position: fixed;
+    animation: explode 1.2s ease-out forwards;
+    pointer-events: none;
 }
 
-.media-row {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 40px;
-    flex-wrap: wrap;
+@keyframes explode {
+    0% {
+        transform: translate(0,0) scale(1);
+        opacity: 1;
+    }
+    70% {
+        opacity: 1;
+    }
+    100% {
+        transform: translate(var(--x), var(--y)) scale(2);
+        opacity: 0;
+    }
 }
 
-.media-row img {
-    width: 260px;
-    height: 260px;
-    object-fit: contain;
-    border-radius: 20px;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-}
-
-/* ========================= */
-/* VERSIONE MOBILE          */
-/* ========================= */
-
+/* Mobile */
 @media (max-width: 600px) {
 
     h1 {
@@ -129,10 +139,9 @@ button {
 
     .play-area {
         width: 300px;
-        height: 220px;
+        height: 260px;
     }
 
-    /* Pulsanti uno sopra l'altro */
     #yes {
         left: 50%;
         transform: translateX(-50%);
@@ -143,22 +152,13 @@ button {
         left: 50%;
         right: auto;
         transform: translateX(-50%);
-        top: 120px;
+        top: 140px;
+        position: absolute;
     }
 
     button {
         font-size: 16px;
         padding: 12px 25px;
-    }
-
-    .media-row {
-        flex-direction: column;
-        gap: 20px;
-    }
-
-    .media-row img {
-        width: 200px;
-        height: 200px;
     }
 }
 
@@ -168,7 +168,7 @@ button {
 <body>
 
 <h1>
-    Sofia 💖✨<br>
+    <span class="sparkle">Sofia 💖</span><br>
     Will you be my Valentine?
 </h1>
 
@@ -181,9 +181,9 @@ button {
 
 const noBtn = document.getElementById("no");
 const yesBtn = document.getElementById("yes");
-const area = document.querySelector(".play-area");
 
 let scale = 1;
+let firstMove = false;
 
 const noTexts = [
     "No 💔",
@@ -196,23 +196,37 @@ const noTexts = [
 
 let textIndex = 0;
 
+/* Movimento NO */
 function moveNo() {
 
     textIndex = (textIndex + 1) % noTexts.length;
     noBtn.textContent = noTexts[textIndex];
 
-    const maxX = area.clientWidth - noBtn.offsetWidth;
-    const maxY = area.clientHeight - noBtn.offsetHeight;
+    const yesRect = yesBtn.getBoundingClientRect();
+    const margin = 40;
 
-    const x = Math.random() * maxX;
-    const y = Math.random() * maxY;
+    const maxX = window.innerWidth - noBtn.offsetWidth;
+    const maxY = window.innerHeight - noBtn.offsetHeight;
+
+    let x, y;
+
+    do {
+        x = Math.random() * maxX;
+        y = Math.random() * maxY;
+    } while (
+        y + noBtn.offsetHeight > yesRect.top - margin &&
+        y < yesRect.bottom + margin
+    );
+
+    if (!firstMove) {
+        noBtn.style.position = "fixed";
+        firstMove = true;
+    }
 
     noBtn.style.left = x + "px";
     noBtn.style.top = y + "px";
-    noBtn.style.right = "auto";
 
-    // YES cresce velocemente e resta centrato su mobile
-    scale *= 1.2;
+    scale *= 1.15;
 
     if (window.innerWidth <= 600) {
         yesBtn.style.transform = `translateX(-50%) scale(${scale})`;
@@ -221,27 +235,82 @@ function moveNo() {
     }
 }
 
-noBtn.addEventListener("mouseover", moveNo);
-noBtn.addEventListener("touchstart", moveNo);
+noBtn.addEventListener("pointerdown", (e) => {
+    e.preventDefault();
+    moveNo();
+});
+
+/* Esplosione gigante */
+function explodeHearts() {
+
+    for (let i = 0; i < 60; i++) {
+
+        const heart = document.createElement("div");
+        heart.classList.add("explosion-heart");
+        heart.innerHTML = "💖";
+
+        heart.style.left = window.innerWidth / 2 + "px";
+        heart.style.top = window.innerHeight / 2 + "px";
+
+        const angle = Math.random() * 2 * Math.PI;
+        const radius = 300 + Math.random() * 200;
+
+        heart.style.setProperty("--x", Math.cos(angle) * radius + "px");
+        heart.style.setProperty("--y", Math.sin(angle) * radius + "px");
+
+        heart.style.fontSize = 24 + Math.random() * 30 + "px";
+
+        document.body.appendChild(heart);
+        setTimeout(() => heart.remove(), 1200);
+    }
+}
 
 yesBtn.addEventListener("click", () => {
 
-    document.body.innerHTML = `
-        <div class="success">
-            <h1 style="margin-top:15vh; font-size:42px; color:white;">
-                Yaaay! 💖<br>
-                I knew it 😏💘
-            </h1>
+    explodeHearts();
 
-            <div class="media-row">
-                <img src="love.gif" alt="romantic gif">
-                <img src="kiss.jpeg" alt="romantic image">
+    setTimeout(() => {
+
+        document.body.style.display = "block";
+        document.body.style.margin = "0";
+
+        document.body.innerHTML = `
+            <div style="
+                position:fixed;
+                top:0;
+                left:0;
+                width:100vw;
+                height:100vh;
+                display:flex;
+                flex-direction:column;
+                justify-content:center;
+                align-items:center;
+                text-align:center;
+                color:white;
+            ">
+                <h1 style="font-size:42px; margin:0;">
+                    Yaaay! 💖<br>
+                    I knew it 😏💘
+                </h1>
+
+                <div style="
+                    display:flex;
+                    justify-content:center;
+                    align-items:center;
+                    gap:30px;
+                    flex-wrap:wrap;
+                    margin-top:30px;
+                ">
+                    <img src="love.gif" width="250">
+                    <img src="kiss.jpeg" width="250">
+                </div>
             </div>
-        </div>
-    `;
+        `;
+
+    }, 900);
 });
 
-/* Cuori animati */
+/* Cuori fluttuanti background */
 function createHeart() {
     const heart = document.createElement("div");
     heart.classList.add("heart");
